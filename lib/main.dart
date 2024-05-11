@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -26,9 +28,52 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // Latitude : 위도 (처음 지도 켰을 때 어디 뜨게 할거냐)
-  // Longitude : 경도
-  final CameraPosition position = CameraPosition(target: LatLng(37.555946, 126.972317), zoom : 14);
+  late GoogleMapController mapController;
+  final Location location = Location();
+
+  CameraPosition currentPosition = CameraPosition(
+    // 기본 카메라 위치
+      target: LatLng(37.555946, 126.972317),
+      zoom : 14,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation(); // 현재 위치를 얻는 함수 호출
+  }
+
+  // 현재 위치를 얻는 함수
+  void _getCurrentLocation() async {
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    _locationData = await location.getLocation();
+    setState(() {
+      currentPosition = CameraPosition(
+        target: LatLng(_locationData.latitude!, _locationData.longitude!),
+        zoom: 14,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
      return Scaffold(
@@ -37,9 +82,11 @@ class _MyHomePageState extends State<MyHomePage> {
      ),
        body : Container(
            child: GoogleMap(
-               initialCameraPosition: this.position
-           )
-       ),
+             initialCameraPosition: currentPosition,
+             onMapCreated: (GoogleMapController controller) {
+               mapController = controller;
+           }
+           )),
      );
   }
 }
