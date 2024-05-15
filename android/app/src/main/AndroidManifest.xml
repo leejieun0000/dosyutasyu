@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.dosyutasyu_f">  <!--여기 자기 파일이름 써야할듯-->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:label="dosyutasyu"
         android:name="${applicationName}"

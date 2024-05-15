@@ -1,29 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'dart:math' as math;
-
+import 'scanner/scanner.dart'; // QR 코드 스캔 화면을 import
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
+      theme: ThemeData(
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.transparent, // Appbar 배경 투명
+          titleTextStyle: TextStyle(
+            color: Colors.blue, // 파란색 글자
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+      ),
       home: const MyHomePage(),
     );
-    }
+  }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  const MyHomePage({Key? key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -35,12 +44,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 기본 카메라 위치
   CameraPosition currentPosition = CameraPosition(
-      target: LatLng(37.555946, 126.972317),
-      zoom : 14,
+    target: LatLng(37.555946, 126.972317),
+    zoom: 14,
   );
 
   bool isLoading = true;
-
   Set<Marker> markers = {};
 
   @override
@@ -118,26 +126,71 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-     return Scaffold(
-       appBar: AppBar(
-           title: Text("도슈타슈"),
-     ),
-       body: isLoading
-           ? Center(child: CircularProgressIndicator())
-           : Container(
-               child: GoogleMap(
-                 initialCameraPosition: currentPosition,
-                 markers: markers,
-                 onMapCreated: (GoogleMapController controller) {
-                   mapController = controller;
-                 },
-               ),
-           ),
-       floatingActionButton: FloatingActionButton(
-         onPressed: _moveCameraToCurrentPosition,
-         tooltip: '현재 위치로 이동',
-         child: const Icon(Icons.my_location),
-       ),
-     );
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "도슈타슈",
+          style: TextStyle(
+            color: Colors.blue, // 글자 색 파란색으로 설정
+            fontWeight: FontWeight.bold, // 굵은 글꼴로 설정
+          ),
+        ),
+        centerTitle: true, // 제목을 가운데 정렬
+        backgroundColor: Colors.transparent, // 앱바 배경을 투명하게 설정
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundImage: AssetImage('assets/images/home_menu.png'), // 이미지로 버튼 채우기
+              backgroundColor: Color(0xFFBF30),
+            ),
+          ),
+        ],
+      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
+        children: [
+          Expanded(
+            child: GoogleMap(
+              initialCameraPosition: currentPosition,
+              markers: markers,
+              onMapCreated: (GoogleMapController controller) {
+                mapController = controller;
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
+              width: double.infinity, // 버튼을 화면 너비에 맞게 설정
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const Scanner(), // Scanner 화면으로 이동
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16), // 버튼 높이 설정
+                  textStyle: TextStyle(fontSize: 18),
+                  backgroundColor: Color(0xFFBF30), // 버튼 배경색 노란색으로 설정
+                ),
+                child: Text("QR 코드 스캔"),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _moveCameraToCurrentPosition,
+        tooltip: '현재 위치로 이동',
+        child: const Icon(Icons.my_location),
+      ),
+      floatingActionButtonLocation:
+      FloatingActionButtonLocation.endDocked, // 우측 하단에 위치시키기
+    );
   }
 }
