@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'scanner/scanner.dart'; // QR 코드 스캔 화면을 import
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,6 +49,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool isLoading = true;
   Set<Marker> markers = {};
+  bool _isPopupShown = false; // 팝업이 떠있는지 여부를 나타내는 변수
+  bool _isRentReturnPopupShown = false;
 
   @override
   void initState() {
@@ -108,6 +109,10 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           ),
         );
+        if (!_isPopupShown) {
+          _showImagePopup();
+          _isPopupShown = true; // 팝업이 뜬 상태로 변경
+        }
       });
     });
   }
@@ -124,6 +129,112 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _showImagePopup() async {
+    if (!_isPopupShown) {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            contentPadding: EdgeInsets.fromLTRB(24, 24, 24, 12), // 사진과 버튼 사이 간격 조정
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: Image.asset('assets/images/popup1.png'), // a.png 이미지를 나타내는 위젯
+                ),
+                SizedBox(height: 16), // 사진과 버튼 사이 추가 간격
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      child: const Text('7일간 보지 않기'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _isPopupShown = true; // 팝업이 닫힌 상태로 변경
+                      },
+                    ),
+                    SizedBox(width: 16),
+                    TextButton(
+                      child: const Text('확인'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _isPopupShown = true; // 팝업이 닫힌 상태로 변경
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _showRentReturnPopup(BuildContext context, String imagePath, {String title = '대여/반납 안내'}) async {
+    bool? result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.fromLTRB(24, 24, 24, 12),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color : Colors.orange,
+                ),
+              ),
+              SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: Image.asset(imagePath),
+              ),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    child: const Text('닫기'),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                  ),
+                  SizedBox(width: 16),
+                  TextButton(
+                    child: const Text('다음'),
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (result == true) {
+      if (imagePath == 'assets/images/rent1.png') {
+        await _showRentReturnPopup(context, 'assets/images/rent2.png');
+      } else if (imagePath == 'assets/images/rent2.png') {
+        await _showRentReturnPopup(context, 'assets/images/rent3.png');
+      } else if (imagePath == 'assets/images/rent3.png') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Scanner()),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,15 +248,23 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true, // 제목을 가운데 정렬
         backgroundColor: Colors.transparent, // 앱바 배경을 투명하게 설정
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/home_menu.png'), // 이미지로 버튼 채우기
-              backgroundColor: Color(0xFFBF30),
-            ),
-          ),
-        ],
+        leading: Builder(
+          builder: (context) {
+            return GestureDetector(
+              onTap: () {
+                Scaffold.of(context).openDrawer();
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundImage: AssetImage('assets/images/home_menu.png'), // 이미지로 버튼 채우기
+                  backgroundColor: Color(0xFFBF30),
+                ),
+              ),
+            );
+          },
+        ),
+
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -166,12 +285,7 @@ class _MyHomePageState extends State<MyHomePage> {
               width: double.infinity, // 버튼을 화면 너비에 맞게 설정
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Scanner(), // Scanner 화면으로 이동
-                    ),
-                  );
+                  _showRentReturnPopup(context, 'assets/images/rent1.png');
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16), // 버튼 높이 설정
@@ -184,6 +298,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+
+
       floatingActionButton: FloatingActionButton(
         onPressed: _moveCameraToCurrentPosition,
         tooltip: '현재 위치로 이동',
@@ -191,6 +307,54 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButtonLocation:
       FloatingActionButtonLocation.endDocked, // 우측 하단에 위치시키기
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.orange,
+              ),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    backgroundImage: AssetImage('assets/image/rent2.jpg'),
+                    radius: 40,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '김민성',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text('홈'),
+              onTap: () {
+                // 홈 화면으로 이동하는 코드 추가
+                Navigator.pop(context); // 드로어 닫기
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('설정'),
+              onTap: () {
+                // 설정 화면으로 이동하는 코드 추가
+                Navigator.pop(context); // 드로어 닫기
+              },
+            ),
+            // 추가 메뉴 항목을 여기에 추가
+          ],
+        ),
+      ),
+
     );
   }
 }
