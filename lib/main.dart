@@ -2,17 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'scanner/scanner.dart'; // QR 코드 스캔 화면을 import
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:dosyutasyu/login_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+// 기존의 main(지도 나오는 거) 확인하고 싶으면 2가지만 변경하면 됨. 주석 확인해봐
+
+// 기존 1
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// 파베 변화1
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({Key? key});
+  //const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      home : LoginScreen(), //파베 변화 2
+      //home: const MyHomePage(), //기존 2
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -25,7 +42,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MyHomePage(),
     );
   }
 }
@@ -257,7 +273,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
-                  backgroundImage: AssetImage('assets/images/home_menu.png'), // 이미지로 버튼 채우기
+                  backgroundImage: AssetImage('assets/images/menu_yellow.png'), // 이미지로 버튼 채우기
                   backgroundColor: Color(0xFFBF30),
                 ),
               ),
@@ -320,7 +336,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
-                    backgroundImage: AssetImage('assets/image/rent2.jpg'),
+                    backgroundImage: AssetImage('assets/images/people2.png'),
                     radius: 40,
                   ),
                   SizedBox(height: 16),
