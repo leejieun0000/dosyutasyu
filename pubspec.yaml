@@ -40,6 +40,9 @@ dependencies:
   location: ^6.0.2
   mobile_scanner: ^5.1.1
   flutter_native_splash: ^2.4.0
+  firebase_auth: ^4.19.5
+  firebase_core: ^2.31.0
+  google_sign_in: 6.2.1
 flutter_native_splash:
   color: "#ffffff" # background color
   image: assets/images/splash.png
@@ -74,6 +77,10 @@ flutter:
     - assets/images/rent1.png
     - assets/images/rent2.png
     - assets/images/rent3.png
+    - assets/images/people.png
+    - assets/images/people2.png
+    - assets/images/menu.png
+    - assets/images/menu_yellow.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
