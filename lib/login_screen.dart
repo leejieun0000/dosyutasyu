@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      MaterialPageRoute(builder: (context) => MyHomePage()),
                     );
                   } on FirebaseAuthException catch (e) {
                     print('an error occured $e');
@@ -73,44 +73,45 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Text('이메일 로그인'),
               ),
             ),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 5),
-              width: double.infinity,
-              child:
-              ElevatedButton(
-                onPressed: () async {
-                  final _googleSignIn = GoogleSignIn();
-                  final googleAccount = await _googleSignIn.signIn();
-
-                  if (googleAccount != null) {
-                    final googleAuth = await googleAccount.authentication;
-
-                    if (googleAuth.accessToken != null &&
-                        googleAuth.idToken != null) {
-                      try {
-                        await FirebaseAuth.instance
-                            .signInWithCredential(GoogleAuthProvider.credential(
-                          idToken: googleAuth.idToken,
-                          accessToken: googleAuth.accessToken,
-                        ));
-                        print('success registered');
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomeScreen()),
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        print('an error occured $e');
-                      } catch (e) {
-                        print('an error occured $e');
-                      }
-                    } else
-                      print('an error occured');
-                  } else
-                    print('an error occured');
-                },
-                child: Text('구글로 시작하기'),
-              ),
-            ),
+            // 구글로 로그인
+            // Container(
+            //   padding: EdgeInsets.symmetric(vertical: 5),
+            //   width: double.infinity,
+            //   child:
+            //   ElevatedButton(
+            //     onPressed: () async {
+            //       final _googleSignIn = GoogleSignIn();
+            //       final googleAccount = await _googleSignIn.signIn();
+            //
+            //       if (googleAccount != null) {
+            //         final googleAuth = await googleAccount.authentication;
+            //
+            //         if (googleAuth.accessToken != null &&
+            //             googleAuth.idToken != null) {
+            //           try {
+            //             await FirebaseAuth.instance
+            //                 .signInWithCredential(GoogleAuthProvider.credential(
+            //               idToken: googleAuth.idToken,
+            //               accessToken: googleAuth.accessToken,
+            //             ));
+            //             print('success registered');
+            //             Navigator.push(
+            //               context,
+            //               MaterialPageRoute(builder: (context) => MyHomePage()),
+            //             );
+            //           } on FirebaseAuthException catch (e) {
+            //             print('an error occured $e');
+            //           } catch (e) {
+            //             print('an error occured $e');
+            //           }
+            //         } else
+            //           print('an error occured');
+            //       } else
+            //         print('an error occured');
+            //     },
+            //     child: Text('구글로 시작하기'),
+            //   ),
+            // ),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
