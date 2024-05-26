@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
@@ -160,7 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
               context: context,
               builder: (BuildContext context) {
                 return Container(
-                  height: 100,
+                  height: 150,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -174,6 +173,17 @@ class _MyHomePageState extends State<MyHomePage> {
                           'Available Bikes: ${station.availableBikes}',
                           style: TextStyle(fontSize: 16),
                         ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showReservationDialog(context, station);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber,
+                            ),
+                            child: Text('예약하기'),
+                        ),
                       ],
                     ),
                   ),
@@ -185,6 +195,34 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
     setState(() {});
+  }
+
+  void _showReservationDialog(BuildContext context, BikeStation station) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('예약 확인'),
+          content: Text('${station.name}에서 자전거를 예약하시겠습니까?'),
+          actions: [
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+            ),
+            TextButton(
+              child: Text('확인'),
+              onPressed: () {
+                // 예약 처리 로직 추가
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
 
