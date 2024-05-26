@@ -2,7 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'scanner/scanner.dart'; // QR 코드 스캔 화면을 import
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
+class BikeStation {
+  final String id;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final String address;
+  final int availableBikes;
+
+  BikeStation({
+    required this.id,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+    required this.address,
+    required this.availableBikes,
+  });
+
+  factory BikeStation.fromJson(Map<String, dynamic> json) {
+    return BikeStation(
+      id: json['id'],
+      name: json['name'],
+      latitude: double.parse(json['x_pos']),
+      longitude: double.parse(json['y_pos']),
+      address: json['address'],
+      availableBikes: json['parking_count'],
+    );
+  }
+}
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key});
@@ -14,6 +44,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late GoogleMapController mapController;
   final Location location = Location();
+  List<BikeStation> bikeStations = [];
 
   // 기본 카메라 위치
   CameraPosition currentPosition = CameraPosition(
@@ -30,6 +61,30 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _getCurrentLocation(); // 현재 위치를 얻는 함수 호출
+    fetchBikeStations();
+  }
+
+  Future<void> fetchBikeStations() async {
+    final response = await http.get(
+      Uri.parse('https://bikeapp.tashu.or.kr:50041/v1/openapi/station'),
+      headers: {'api-token': '8drt984w1f467rzi'},
+    );
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      final results = jsonData['results'];
+      List<BikeStation> stations = [];
+
+      for (var result in results) {
+        stations.add(BikeStation.fromJson(result));
+      }
+
+      setState(() {
+        bikeStations = stations;
+      });
+    } else {
+      throw Exception('Failed to load bike stations');
+    }
   }
 
   // 현재 위치를 얻는 함수
@@ -212,42 +267,46 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(
-      //     "도슈타슈",
-      //     style: TextStyle(
-      //       color: Colors.blue, // 글자 색 파란색으로 설정
-      //       fontWeight: FontWeight.bold, // 굵은 글꼴로 설정
-      //     ),
-      //   ),
-      //   centerTitle: true, // 제목을 가운데 정렬
-      //   backgroundColor: Colors.transparent, // 앱바 배경을 투명하게 설정
-      //   leading: Builder(
-      //     builder: (context) {
-      //       return GestureDetector(
-      //         onTap: () {
-      //           Scaffold.of(context).openDrawer();
-      //         },
-      //         child: Padding(
-      //           padding: const EdgeInsets.all(8.0),
-      //           child: CircleAvatar(
-      //             backgroundImage: AssetImage('assets/images/menu_yellow.png'), // 이미지로 버튼 채우기
-      //             backgroundColor: Color(0xFFBF30),
-      //           ),
-      //         ),
-      //       );
-      //     },
-      //   ),
-      // ),
       body: Stack( // Stack 위젯을 사용하여 지도와 버튼 겹치기
         children: [
           GoogleMap( // Google Maps 위젯
             initialCameraPosition: currentPosition,
-            markers: markers,
             onMapCreated: (GoogleMapController controller) {
               mapController = controller;
             },
-            zoomControlsEnabled: false,
+        markers: bikeStations
+            .map((station) => Marker(
+          markerId: MarkerId(station.id),
+          position: LatLng(station.latitude, station.longitude),
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  height: 100,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          station.name,
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Available Bikes: ${station.availableBikes}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ))
+            .toSet(),
+            zoomControlsEnabled: true,
           ),
           Positioned( // 현재 위치 버튼 위치 변경
             bottom: 80.0, // 하단 여백
@@ -258,17 +317,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Icon(Icons.my_location),
             ),
           ),
-          // Align(
-          //   alignment: Alignment.bottomRight,
-          //   child: Padding(
-          //     padding: const EdgeInsets.only(bottom: 80.0), // 대여하기 버튼과의 간격 조절
-          //     child: FloatingActionButton(
-          //       onPressed: _moveCameraToCurrentPosition,
-          //       tooltip: '현재 위치로 이동',
-          //       child: const Icon(Icons.my_location),
-          //     ),
-          //   ),
-          // ),
+
           Align( // 버튼을 화면 아래에 배치
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -295,15 +344,6 @@ class _MyHomePageState extends State<MyHomePage> {
             left: 0,
             right: 0,
             child: AppBar(
-              // title: Text(
-              //   "도슈타슈",
-              //   style: TextStyle(
-              //     color: Colors.blue, // 글자 색 파란색으로 설정
-              //     fontWeight: FontWeight.w900, // FontWeight.bold보다 더 두꺼운 FontWeight.w900 사용
-              //     fontSize: 24, // 폰트 크기 24로 변경
-              //
-              //   ),
-              // ),
               title: Image.asset(
                 'assets/images/doshutashulogo.png', // 이미지 경로
                 height: 40, // 이미지 높이 (선택 사항)

@@ -38,6 +38,7 @@ dependencies:
   #import 'package:google_maps_flutter/google_maps_flutter.dart';
   google_maps_flutter: ^2.6.1
   location: ^6.0.2
+  http: ^0.13.3
   mobile_scanner: ^5.1.1
   flutter_native_splash: ^2.4.0
   firebase_auth: ^4.19.5
