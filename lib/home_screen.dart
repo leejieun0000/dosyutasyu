@@ -1,9 +1,14 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'scanner/scanner.dart'; // QR 코드 스캔 화면을 import
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+
 
 class BikeStation {
   final String id;
@@ -71,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
+      final jsonData = json.decode(utf8.decode(response.bodyBytes));
       final results = jsonData['results'];
       List<BikeStation> stations = [];
 
@@ -81,11 +86,107 @@ class _MyHomePageState extends State<MyHomePage> {
 
       setState(() {
         bikeStations = stations;
+        _setMarkers(); // 마커 설정
       });
     } else {
       throw Exception('Failed to load bike stations');
     }
   }
+
+  Future<BitmapDescriptor> _createMarkerIconWithCount(int count) async {
+    final PictureRecorder pictureRecorder = PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint paint = Paint()..color = Colors.orange;
+    final int markerSize = 120;
+
+    // Draw a circle for the marker background
+    canvas.drawCircle(
+      Offset(markerSize / 2, markerSize / 2),
+      markerSize / 2.0,
+      paint,
+    );
+
+    // Draw the bike icon (optional)
+    TextPainter textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.text = TextSpan(
+      text: '🚲',
+      style: TextStyle(fontSize: 50),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset((markerSize - textPainter.width) / 2, 10),
+    );
+
+    // Draw the available bikes count
+    textPainter.text = TextSpan(
+      text: count.toString(),
+      style: TextStyle(
+        fontSize: 40,
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset((markerSize - textPainter.width) / 2, markerSize / 2),
+    );
+
+    final img = await pictureRecorder.endRecording().toImage(markerSize, markerSize);
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List uint8List = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(uint8List);
+  }
+
+  void _setMarkers() async {
+    markers.clear();
+    for (var station in bikeStations) {
+      final BitmapDescriptor markerIcon = await _createMarkerIconWithCount(station.availableBikes);
+      markers.add(
+        Marker(
+          markerId: MarkerId(station.id),
+          position: LatLng(station.latitude, station.longitude),
+          infoWindow: InfoWindow(
+            title: station.name,
+            snippet: 'Available Bikes: ${station.availableBikes}',
+          ),
+          icon: markerIcon,
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  height: 100,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          station.name,
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Available Bikes: ${station.availableBikes}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
+    }
+    setState(() {});
+  }
+
 
   // 현재 위치를 얻는 함수
   void _getCurrentLocation() async {
@@ -124,7 +225,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
         isLoading = false;
 
-        // 마커 추가
+        // 현재 위치 마커 추가
         markers.add(
           Marker(
             markerId: MarkerId("currentLocation"),
@@ -132,8 +233,6 @@ class _MyHomePageState extends State<MyHomePage> {
             infoWindow: InfoWindow(
               title: "현재 위치",
             ),
-            // 사용자가 보고 있는 방향을 나타내는 화살표 아이콘 추가
-            // 여기서는 임시로 화살표 아이콘 대신 기본 아이콘을 회전시키는 방법을 사용
             rotation: currentLocation.heading!, // 방향(헤딩)에 따라 마커 회전
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           ),
@@ -274,38 +373,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onMapCreated: (GoogleMapController controller) {
               mapController = controller;
             },
-        markers: bikeStations
-            .map((station) => Marker(
-          markerId: MarkerId(station.id),
-          position: LatLng(station.latitude, station.longitude),
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              builder: (BuildContext context) {
-                return Container(
-                  height: 100,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          station.name,
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Available Bikes: ${station.availableBikes}',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ))
-            .toSet(),
+            markers: markers,
             zoomControlsEnabled: true,
           ),
           Positioned( // 현재 위치 버튼 위치 변경
@@ -329,10 +397,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     _showRentReturnPopup(context, 'assets/images/rent1.png');
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    textStyle: TextStyle(fontSize: 18),
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.white
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      textStyle: TextStyle(fontSize: 18),
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.white
                   ),
                   child: Text("대여하기"),
                 ),
