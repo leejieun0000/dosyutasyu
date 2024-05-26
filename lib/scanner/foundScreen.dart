@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dosyutasyu/free_ride.dart';
 
 class FoundScreen extends StatefulWidget {
   final String value;
@@ -33,7 +34,10 @@ class _FoundScreenState extends State<FoundScreen> {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Implement 자유 이용 onPressed action
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FreeRide()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFBF30), // 버튼 배경색 노란색
