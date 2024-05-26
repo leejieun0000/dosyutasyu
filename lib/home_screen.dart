@@ -48,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 기본 카메라 위치
   CameraPosition currentPosition = CameraPosition(
-    target: LatLng(37.555946, 126.972317),
+    target: LatLng(36.368549, 127.343738),
     zoom: 14,
   );
 
