@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dosyutasyu/free_ride.dart';
+import 'package:dosyutasyu/dest_ride.dart';
 
 class FoundScreen extends StatefulWidget {
   final String value;
@@ -65,7 +66,10 @@ class _FoundScreenState extends State<FoundScreen> {
               SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () {
-                  // 목적지 선택 기능 구현
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DestRide()), // Navigate to DestRide
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFFFD700), // 버튼 배경색 노란색
