@@ -56,5 +56,33 @@
 		Copy
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSLocationAlwaysUsageDescription</key>
+        <string>We need your location to provide better services</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>We need your location when the app is in use</string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>We need your location always and when in use</string>
+        <key>NSLocationUsageDescription</key>
+        <string>We need your location to provide location-based services</string>
+		<key>UIBackgroundModes</key>
+        <array>
+            <string>fetch</string>
+            <string>remote-notification</string>
+        </array>
+        <key>UIUserInterfaceStyle</key>
+        <string>Light</string>
+        <key>UIRequiredDeviceCapabilities</key>
+        <array>
+            <string>armv7</string>
+        </array>
+        <key>FlutterLocalNotificationsPlugin</key>
+        <dict>
+            <key>UNNotificationPresentationOptionsAlert</key>
+            <true/>
+            <key>UNNotificationPresentationOptionsBadge</key>
+            <true/>
+            <key>UNNotificationPresentationOptionsSound</key>
+            <true/>
+        </dict>
 	</dict>
 </plist>

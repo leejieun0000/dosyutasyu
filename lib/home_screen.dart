@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // 푸시 알림 라이브러리
 
 
 class BikeStation {
@@ -15,7 +16,7 @@ class BikeStation {
   final double latitude;
   final double longitude;
   final String address;
-  final int availableBikes;
+  int availableBikes; // 예약 후 값을 증가시키기 위해 final 제거
 
   BikeStation({
     required this.id,
@@ -49,6 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late GoogleMapController mapController;
   final Location location = Location();
   List<BikeStation> bikeStations = [];
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   // 기본 카메라 위치
   CameraPosition currentPosition = CameraPosition(
@@ -66,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _getCurrentLocation(); // 현재 위치를 얻는 함수 호출
     fetchBikeStations();
+    _initNotifications(); // 푸시 알림 초기화
   }
 
   Future<void> fetchBikeStations() async {
@@ -175,14 +178,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         SizedBox(height: 20),
                         ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _showReservationDialog(context, station);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber,
-                            ),
-                            child: Text('예약하기'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showReservationDialog(context, station);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber,
+                          ),
+                          child: Text('예약하기'),
                         ),
                       ],
                     ),
@@ -198,6 +201,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showReservationDialog(BuildContext context, BikeStation station) {
+    int initialAvailableBikes = station.availableBikes;
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -215,8 +220,36 @@ class _MyHomePageState extends State<MyHomePage> {
             TextButton(
               child: Text('확인'),
               onPressed: () {
-                // 예약 처리 로직 추가
+                setState(() {
+                  station.availableBikes++; // 예약 후 자전거 개수 증가
+                });
+
                 Navigator.of(context).pop(); // 다이얼로그 닫기
+
+                // 예약 완료 팝업 띄우기
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('예약 완료'),
+                      content: Text('예약되었습니다.'),
+                      actions: [
+                        TextButton(
+                          child: Text('확인'),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // 예약 완료 팝업 닫기
+
+                            // 예약 전후 자전거 개수 비교하여 푸시 알림 보내기
+                            if (station.availableBikes == initialAvailableBikes + 1) {
+                              _showNotification();
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
             ),
           ],
@@ -225,6 +258,35 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _initNotifications() {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: IOSInitializationSettings(),
+    );
+
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  Future<void> _showNotification() async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'your_channel_id',
+      'your_channel_name',
+      'your_channel_description',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      '자전거 예약',
+      '예약이 완료되었습니다.',
+      platformChannelSpecifics,
+      payload: 'item id 2',
+    );
+  }
 
   // 현재 위치를 얻는 함수
   void _getCurrentLocation() async {

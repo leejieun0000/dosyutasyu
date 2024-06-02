@@ -1,10 +1,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.dosyutasyu_f">  <!--여기 자기 파일이름 써야할듯-->
+    package="com.example.dosyutasyu">
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="dosyutasyu"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="default_notification_channel_id"/>
+
+        <!-- 알림 채널 추가 -->
+        <meta-data
+            android:name="flutter_local_notifications_channel_default_id"
+            android:value="default_notification_channel_id"/>
+        <meta-data
+            android:name="flutter_local_notifications_channel_default_name"
+            android:value="기본 채널"/>
+        <meta-data
+            android:name="flutter_local_notifications_channel_default_description"
+            android:value="알림을 표시하는 기본 채널"/>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -36,6 +56,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <service android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" android:enabled="true" android:exported="true"/>
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

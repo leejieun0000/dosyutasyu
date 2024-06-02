@@ -16,15 +16,25 @@ class _FoundScreenState extends State<FoundScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: Builder(
-          builder: (BuildContext context){
-            return RotatedBox(quarterTurns: 0,child: IconButton(
-              icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context, false),
-            ),);
+          builder: (BuildContext context) {
+            return RotatedBox(
+              quarterTurns: 0,
+              child: IconButton(
+                icon: Icon(Icons.arrow_back_rounded, color: Colors.black), // 글자색 검은색
+                onPressed: () => Navigator.pop(context, false),
+              ),
+            );
           },
         ),
-        title: Text("대여하기", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        backgroundColor: Color(0xFFBF30),
+        title: Center(
+          child: Text(
+            "대여하기",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black), // 글자색 검은색
+          ),
+        ),
+        backgroundColor: Color(0xFFFFD700), // 배경색 (노란색)
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: Center(
         child: Padding(
@@ -32,27 +42,41 @@ class _FoundScreenState extends State<FoundScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FreeRide()),
+                    MaterialPageRoute(
+                      builder: (context) => FreeRide(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFBF30), // 버튼 배경색 노란색
+                  backgroundColor: Color(0xFFFFD700), // 버튼 배경색 노란색
+                  minimumSize: Size(double.infinity, 60), // 버튼 크기 가로로 길게
+                  padding: EdgeInsets.symmetric(horizontal: 20),
                 ),
-                child: Text("자유 이용", style: TextStyle(color: Colors.black)), // 글자색 검은색
+                icon: Icon(Icons.directions_bike, color: Colors.black),
+                label: Text(
+                  "자유 이용",
+                  style: TextStyle(color: Colors.black, fontSize: 18), // 글자색 검은색
+                ),
               ),
               SizedBox(height: 20),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Implement 목적지 선택 onPressed action
+                  // 목적지 선택 기능 구현
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFBF30), // 버튼 배경색 노란색
+                  backgroundColor: Color(0xFFFFD700), // 버튼 배경색 노란색
+                  minimumSize: Size(double.infinity, 60), // 버튼 크기 가로로 길게
+                  padding: EdgeInsets.symmetric(horizontal: 20),
                 ),
-                child: Text("목적지 선택", style: TextStyle(color: Colors.black)), // 글자색 검은색
+                icon: Icon(Icons.location_on, color: Colors.black),
+                label: Text(
+                  "목적지 선택",
+                  style: TextStyle(color: Colors.black, fontSize: 18), // 글자색 검은색
+                ),
               ),
             ],
           ),
