@@ -68,7 +68,7 @@ class _FoundScreenState extends State<FoundScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => DestRide()), // Navigate to DestRide
+                    MaterialPageRoute(builder: (context) => DestinationRide()), // Navigate to DestRide
                   );
                 },
                 style: ElevatedButton.styleFrom(

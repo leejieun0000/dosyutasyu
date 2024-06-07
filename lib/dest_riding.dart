@@ -3,12 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'dart:async';
-import 'home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
+
+import 'home_screen.dart';
 
 class BikeStation {
   final String id;
@@ -39,16 +39,16 @@ class BikeStation {
   }
 }
 
-class FreeRide extends StatefulWidget {
+class DestRiding extends StatefulWidget {
+  const DestRiding({Key? key}) : super(key: key);
+
   @override
-  _FreeRideState createState() => _FreeRideState();
+  _DestRidingState createState() => _DestRidingState();
 }
 
-class _FreeRideState extends State<FreeRide> {
+class _DestRidingState extends State<DestRiding> {
   late GoogleMapController mapController;
   final Location location = Location();
-  late Timer _timer;
-  Duration _elapsedTime = Duration.zero;
   List<BikeStation> bikeStations = [];
 
   CameraPosition currentPosition = CameraPosition(
@@ -63,22 +63,7 @@ class _FreeRideState extends State<FreeRide> {
   void initState() {
     super.initState();
     _getCurrentLocation();
-    _startTimer();
     fetchBikeStations();
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _elapsedTime = Duration(seconds: timer.tick);
-      });
-    });
   }
 
   void _getCurrentLocation() async {
@@ -89,7 +74,7 @@ class _FreeRideState extends State<FreeRide> {
     _serviceEnabled = await location.serviceEnabled();
     if (!_serviceEnabled) {
       _serviceEnabled = await location.requestService();
-      if (_serviceEnabled != true) {
+      if (!_serviceEnabled) {
         return;
       }
     }
@@ -103,40 +88,23 @@ class _FreeRideState extends State<FreeRide> {
     }
 
     _locationData = await location.getLocation();
-
-    location.onLocationChanged.listen((LocationData currentLocation) {
-      setState(() {
-        currentPosition = CameraPosition(
-          target: LatLng(currentLocation.latitude!, currentLocation.longitude!),
-          zoom: 14,
-        );
-
-        isLoading = false;
-
-        markers.add(
-          Marker(
-            markerId: MarkerId("currentLocation"),
-            position: LatLng(currentLocation.latitude!, currentLocation.longitude!),
-            infoWindow: InfoWindow(
-              title: "현재 위치",
-            ),
-            rotation: currentLocation.heading!,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          ),
-        );
-      });
+    setState(() {
+      currentPosition = CameraPosition(
+        target: LatLng(_locationData.latitude!, _locationData.longitude!),
+        zoom: 14,
+      );
+      isLoading = false;
     });
+
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(currentPosition),
+    );
   }
 
-  void _moveCameraToCurrentPosition() async {
-    final LocationData _locationData = await location.getLocation();
-    mapController.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(_locationData.latitude!, _locationData.longitude!),
-          zoom: 14,
-        ),
-      ),
+  void _returnBike() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MyHomePage()),
     );
   }
 
@@ -229,100 +197,47 @@ class _FreeRideState extends State<FreeRide> {
     setState(() {});
   }
 
-  void _showReturnCompleteDialog() {
-    final hours = _elapsedTime.inHours.toString().padLeft(2, '0');
-    final minutes = (_elapsedTime.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (_elapsedTime.inSeconds % 60).toString().padLeft(2, '0');
-    final elapsedTimeStr = '$hours:$minutes:$seconds';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("반납완료!"),
-          content: Text("반납이 완료되었습니다.\n이용 시간: $elapsedTimeStr"),
-          actions: <Widget>[
-            TextButton(
-              child: Text("확인"),
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => MyHomePage()),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final hours = _elapsedTime.inHours.toString().padLeft(2, '0');
-    final minutes = (_elapsedTime.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds = (_elapsedTime.inSeconds % 60).toString().padLeft(2, '0');
-
     return Scaffold(
+      appBar: AppBar(
+        leading: Builder(
+          builder: (BuildContext context) {
+            return RotatedBox(
+              quarterTurns: 0,
+              child: IconButton(
+                icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+                onPressed: () => Navigator.pop(context, false),
+              ),
+            );
+          },
+        ),
+        title: Text(
+          "목적지 이동",
+          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Color(0xFFBF30),
+      ),
       body: Stack(
         children: [
-          GoogleMap(
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : GoogleMap(
             initialCameraPosition: currentPosition,
             markers: markers,
-            onMapCreated: (GoogleMapController controller) {
-              mapController = controller;
-            },
-            zoomControlsEnabled: false,
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _showReturnCompleteDialog,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    textStyle: TextStyle(fontSize: 18),
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text("반납하기"),
-                ),
-              ),
-            ),
+            onMapCreated: (controller) => mapController = controller,
           ),
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                AppBar(
-                  title: Image.asset(
-                    'assets/images/doshutashulogo.png',
-                    height: 40,
-                    fit: BoxFit.contain,
-                  ),
-                  centerTitle: true,
-                  backgroundColor: Colors.white.withOpacity(0.4),
-                  elevation: 4,
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.all(8.0),
-                    color: Colors.white.withOpacity(0.8),
-                    child: Text(
-                      '이용 시간: $hours:$minutes:$seconds',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
+            bottom: 50,
+            left: 20,
+            right: 20,
+            child: ElevatedButton(
+              onPressed: _returnBike,
+              child: Text("반납하기"),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 15),
+                textStyle: TextStyle(fontSize: 18),
+              ),
             ),
           ),
         ],
